@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title><%= tender ? tender.name : 'No Tender Found' %> Details</title>
+    <link rel="stylesheet" type="text/css" href="/css/style.css">
+</head>
+<body>
+    <% if (tender) { %>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/tenders">Current Tenders</a></li>
+                <li><a href="/tenders/past">Past Tenders</a></li>
+                <li><a href="/tender/add">Add Tender</a></li>
+            </ul>
+        </nav>
+        
+        <h1>Tender Details: <%= tender.name %></h1>
+        <div class="tender-info">
+            <p><strong>Description:</strong> <%= tender.description %></p>
+            <p><strong>Institution ID:</strong> <%= tender.institution_id %></p>
+            <p><strong>Start Date:</strong> <%= new Date(tender.start_datetime).toLocaleString() %></p>
+            <p><strong>End Date:</strong> <%= new Date(tender.end_datetime).toLocaleString() %></p>
+            <p><strong>Maximum Budget:</strong> $<%= tender.maximum_budget.toFixed(2) %></p>
+        </div>
+
+        <% if (new Date(tender.end_datetime) > new Date()) { %>
+            <p><strong>Current Highest Bid:</strong> <%= tender.highest_bid %></p>
+            <h2>Submit Your Bid</h2>
+            <form class="bid-submission-form" action="/tender/<%= tender.id %>/bid" method="post">
+                <label for="institution_id">Your Institution ID:</label>
+                <input type="text" id="institution_id" name="institution_id" required>
+                <label for="bid_amount">Bid Amount:</label>
+                <input type="number" id="bid_amount" name="bid_amount" required>
+                <input type="submit" value="Submit Bid">
+            </form>
+        <% } else { %>
+            <p>This tender is no longer accepting bids.</p>
+            <p><strong>Winner Institution ID:</strong> <%= tender.winner_id %></p>
+        <% } %>
+    <% } else { %>
+        <h1>No tender found</h1>
+    <% } %>
+</body>
+</html>

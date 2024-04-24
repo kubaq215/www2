@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title><%= title %></title>
+    <link rel="stylesheet" type="text/css" href="/css/style.css">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="/tenders">Current Tenders</a></li>
+            <li><a href="/tenders/past">Past Tenders</a></li>
+            <li><a href="/tender/add">Add Tender</a></li>
+        </ul>
+    </nav>
+    <h1>Past Tenders</h1>
+    <ul>
+        <% tenders.forEach(tender => { %>
+            <li><a href="/tender/<%= tender.id %>"><%= tender.name %></a> - Ended on <%= tender.end_datetime %></li>
+        <% }) %>
+    </ul>
+    <a href="/">Back to Home</a>
+</body>
+</html>
