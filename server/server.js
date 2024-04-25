@@ -33,6 +33,14 @@ db.serialize(() => {
     )`);
 });
 
+db.get('SELECT datetime("now", "+2 hour") AS current_datetime', [], (err, result) => {
+    if (err) {
+        console.error(err.message);
+    } else {
+        console.log(result.current_datetime);
+    }
+});
+
 const app = express();
 
 // Set the view engine to ejs
@@ -85,32 +93,33 @@ app.get('/tender/:id', (req, res) => {
             return res.status(404).send("Tender not found.");
         }
 
-        // Check if the tender is active or past its end date
-        const now = new Date();
-        if (new Date(tender.end_datetime) > now) {
-            // Tender is active, get the current highest bid
-            const sqlHighestBid = 'SELECT MAX(bid_amount) AS highest_bid FROM bids WHERE tender_id = ?';
-            db.get(sqlHighestBid, [tender.id], (err, bid) => {
-                tender.highest_bid = bid ? bid.highest_bid : 'No bids yet';
-                res.render('tender_details', { tender: tender });
-            });
-        } else {
-            // Tender has ended, get the winning bid's institution ID
-            const sqlWinningBid = `SELECT institution_id FROM bids WHERE tender_id = ? ORDER BY bid_amount DESC LIMIT 1`;
-            db.get(sqlWinningBid, [tender.id], (err, bid) => {
-                tender.winner_id = bid ? bid.institution_id : 'No winner';
-                res.render('tender_details', { tender: tender });
-            });
-        }
+        // Fetch bids for the tender
+        const sqlBids = `SELECT * FROM bids WHERE tender_id = ? ORDER BY bid_amount ASC`;
+        db.all(sqlBids, [tender.id], (err, bids) => {
+            if (err) {
+                console.error(err.message);
+                return res.status(500).send("Error fetching bids.");
+            }
+            
+            // Filter bids that do not exceed the maximum budget
+            const validBids = bids.filter(bid => bid.bid_amount <= tender.maximum_budget);
+
+            // Add bid data to the tender object
+            tender.bids = validBids;
+            tender.noValidBids = validBids.length === 0;
+            
+            res.render('tender_details', { tender: tender });
+        });
     });
 });
 
 app.post('/tender/add', (req, res) => {
     const { name, description, institution, start_datetime, end_datetime, maximum_budget } = req.body;
-    console.log(start_datetime + ":00", end_datetime);
+    let start_datetime_formated = start_datetime.replace('T', ' ') + ":00";
+    let end_datetime_formated = end_datetime.replace('T', ' ') + ":00";
     const sql = `INSERT INTO tenders (name, description, institution_id, start_datetime, end_datetime, maximum_budget)
                  VALUES (?, ?, ?, ?, ?, ?)`;
-    db.run(sql, [name, description, institution, start_datetime + ":00", end_datetime + ":00", maximum_budget], function(err) {
+    db.run(sql, [name, description, institution, start_datetime_formated, end_datetime_formated, maximum_budget], function(err) {
         if (err) {
             console.error(err.message);
             return res.status(500).send("Failed to add tender due to an error.");

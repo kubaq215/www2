@@ -26,7 +26,6 @@
         </div>
 
         <% if (new Date(tender.end_datetime) > new Date()) { %>
-            <p><strong>Current Highest Bid:</strong> <%= tender.highest_bid %></p>
             <h2>Submit Your Bid</h2>
             <form class="bid-submission-form" action="/tender/<%= tender.id %>/bid" method="post">
                 <label for="institution_id">Your Institution ID:</label>
@@ -37,7 +36,17 @@
             </form>
         <% } else { %>
             <p>This tender is no longer accepting bids.</p>
-            <p><strong>Winner Institution ID:</strong> <%= tender.winner_id %></p>
+            <h2>Placed Bids</h2>
+            <ul>
+                <% if (!tender.noValidBids) { %>
+                    <% tender.bids.forEach(function(bid) { %>
+                        <li><%= bid.institution_id %> - $<%= bid.bid_amount.toFixed(2) %></li>
+                    <% }) %>
+                <% } else { %>
+                    <li>No bids placed for this tender or none were in budget.</li>
+                <% } %>
+            </ul>
+            </ul>
         <% } %>
     <% } else { %>
         <h1>No tender found</h1>
